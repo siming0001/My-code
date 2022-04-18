@@ -1,0 +1,261 @@
+C51 COMPILER V9.54   MAIN                                                                  12/10/2021 13:28:42 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN main.OBJ
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE main.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include<reg52.h> //包含头文件，一般情况不需要改动，头文件包含特殊功能寄存器的定义
+   2          #include<stdio.h>
+   3          #include <intrins.h>
+   4          #include "delay.h"
+   5          #include "rc522.h"
+   6          #include "1602.h"
+   7          #include "beep.h"
+   8          #include<string.h>
+   9          
+  10          unsigned char UID[5]; //卡号
+  11          unsigned char Temp[4] ; //暂存数组  
+  12          unsigned char code A[3]={0x00,0x00,0x00};//用来占位，实际无意义
+  13          
+  14          unsigned long time_20ms;   //定时计数
+  15          char dis0[16];    //液晶显示数组
+  16          char dis1[16];
+  17          unsigned char disFlag=0;  //显示标志
+  18          unsigned char manNum=0;
+  19          void Init_Timer0(void);    //函数声明
+  20          void UART_Init(void);
+  21          void INT0_Init(void);
+  22          void INT1_Init(void);
+  23          void uartSendStr(unsigned char *s,unsigned char length);
+  24          void uartSendByte(unsigned char dat);
+  25          bit Flag=0;//签到签退模式选择
+  26          bit modeFlag=0;//卡片录入模式选择
+  27          bit beepFlag0=0;
+  28          bit beepFlag1=0;
+  29          bit selectFlag=0;//考情查询标志位
+  30          
+  31          void main (void)
+  32          {     
+  33   1        unsigned char disPlace=0; //显示位置
+  34   1        UART_Init();    //串口初始化
+  35   1        Init_Timer0();        //定时器0初始化
+  36   1        LCD_Init();           //初始化液晶
+  37   1        Delay1Ms(200);          //延时有助于稳定
+  38   1        INT0_Init();  //外部中断0初始
+  39   1        INT1_Init();  //外部中断1初始
+  40   1        LCD_Clear();
+  41   1      
+  42   1        PcdReset();//复位RC522
+  43   1        PcdAntennaOn();//开启天线发射 
+  44   1      
+  45   1        //欢迎界面
+  46   1        sprintf(dis0," Hello,welcome");//打印数据
+  47   1        LCD_Write_String(0,0,dis0);//显示第二行
+  48   1        sprintf(dis1," to the system!");//打印数据
+  49   1        LCD_Write_String(0,1,dis1);//显示第二行
+  50   1        Delay1Ms(2000);
+  51   1        while (1)         //主循环
+  52   1        {
+  53   2          //按下按键K4，触发外部中断1，进行卡片录入
+  54   2          while(modeFlag)
+  55   2          {
+C51 COMPILER V9.54   MAIN                                                                  12/10/2021 13:28:42 PAGE 2   
+
+  56   3            if(beepFlag1)//触发外部中断1且modeFlag==1，蜂鸣器鸣叫
+  57   3            {
+  58   4              Beep_Time1(100);
+  59   4              beepFlag1=0;
+  60   4            }
+  61   3            LCD_Clear();
+  62   3            sprintf(dis0,"Card number entr");//打印数据
+  63   3            sprintf(dis1,"y");//打印数据
+  64   3            LCD_Write_String(0,0,dis0);//显示第一行
+  65   3            LCD_Write_String(0,1,dis1);//显示第二行
+  66   3            Delay1Ms(200);
+  67   3            LCD_Clear();
+  68   3            if(PcdRequest(0x52,Temp)==MI_OK)  //检测到卡号
+  69   3            {
+  70   4              if(PcdAnticoll(UID)==MI_OK)
+  71   4                uartSendStr(UID,4);
+  72   4            }
+  73   3          }
+  74   2        
+  75   2          if(selectFlag)
+  76   2          {
+  77   3            //改变上位机考情查询状态位
+  78   3            uartSendByte(0xff);
+  79   3            uartSendStr(A,3);
+  80   3            selectFlag=0;
+  81   3          }
+  82   2          
+  83   2          if(PcdRequest(0x52,Temp)==MI_OK)  //检测到卡号
+  84   2          {
+  85   3              if(PcdAnticoll(UID)==MI_OK)
+  86   3              { 
+  87   4                //串口发送卡号
+  88   4                uartSendStr(UID,4);
+  89   4                Beep_Time(100);
+  90   4                Delay1Ms(100);
+  91   4              }
+  92   3          }
+  93   2            //定时器中断定时显示
+  94   2          if(disFlag  == 1)
+  95   2          {
+  96   3              LCD_Clear();
+  97   3              
+  98   3              if(Flag)
+  99   3              {
+ 100   4                if(beepFlag0)//触发外部中断0，蜂鸣器鸣叫
+ 101   4                {
+ 102   5                  Beep_Time1(100);
+ 103   5                  beepFlag0=0;
+ 104   5                }
+ 105   4                sprintf(dis0,"Please sign out");//打印数据
+ 106   4              }
+ 107   3              else
+ 108   3              {
+ 109   4                if(beepFlag0)
+ 110   4                {
+ 111   5                  Beep_Time1(100);
+ 112   5                  beepFlag0=0;
+ 113   5                }
+ 114   4                sprintf(dis0,"Please sign in");
+ 115   4              }
+ 116   3              LCD_Write_String(0,0,dis0);//显示第一行
+ 117   3              disFlag=0;                   
+C51 COMPILER V9.54   MAIN                                                                  12/10/2021 13:28:42 PAGE 3   
+
+ 118   3          }
+ 119   2        }
+ 120   1      }
+ 121          
+ 122          
+ 123          void Init_Timer0(void)
+ 124          {
+ 125   1        TMOD |= 0x01;   //使用模式1，16位定时器，使用"|"符号可以在使用多个定时器时不受影响         
+ 126   1        TH0=(65536-20000)/256;      //重新赋值 20ms
+ 127   1        TL0=(65536-20000)%256;
+ 128   1        EA=1;            //总中断打开
+ 129   1        ET0=1;           //定时器中断打开
+ 130   1        TR0=1;           //定时器开关打开
+ 131   1      }
+ 132          
+ 133          void Timer0_isr(void) interrupt 1 
+ 134          {
+ 135   1        TH0=(65536-20000)/256;      //重新赋值 20ms
+ 136   1        TL0=(65536-20000)%256;  
+ 137   1        time_20ms++;
+ 138   1        if(time_20ms%10==0)    //定时显示
+ 139   1        {disFlag = 1 ;}
+ 140   1      }
+ 141          
+ 142          void INT0_Init(void)
+ 143          {
+ 144   1        IE0=0;
+ 145   1        EA=1;
+ 146   1        IT0=1;
+ 147   1        EX0=1;
+ 148   1        IP=0x01;
+ 149   1      }
+ 150          
+ 151          void INT1_Init(void)
+ 152          {
+ 153   1        IE1=0;
+ 154   1        EA=1;
+ 155   1        IT1=1;
+ 156   1        EX1=1;
+ 157   1      }
+ 158          
+ 159          void INT0Handler(void) interrupt 0
+ 160          {
+ 161   1        Flag=!Flag;                                                                                              
+             -              
+ 162   1        beepFlag0=1;
+ 163   1        selectFlag=1;
+ 164   1      }
+ 165          
+ 166          void INT1Handler(void) interrupt 2
+ 167          {
+ 168   1        modeFlag=!modeFlag;
+ 169   1        beepFlag1=1;
+ 170   1      }
+ 171          
+ 172          void UART_Init(void)
+ 173          {
+ 174   1          SCON  = 0x50;           // SCON: 模式 1, 8-bit UART, 使能接收  
+ 175   1          TMOD |= 0x20;               // TMOD: timer 1, mode 2, 8-bit 重装
+ 176   1          TH1   = 0xFD;               // TH1:  重装值 9600 波特率 晶振 11.0592MHz
+ 177   1          TL1 = TH1;  
+ 178   1          TR1   = 1;                  // TR1:  timer 1 打开                         
+C51 COMPILER V9.54   MAIN                                                                  12/10/2021 13:28:42 PAGE 4   
+
+ 179   1          EA    = 1;                  //打开总中断
+ 180   1          ES    = 1;                  //打开串口中断
+ 181   1      }
+ 182          
+ 183          
+ 184          void uartSendByte(unsigned char dat)
+ 185          {
+ 186   1        unsigned char time_out;
+ 187   1        time_out=0x00;
+ 188   1        SBUF = dat;       //将数据放入SBUF中
+ 189   1        while((!TI)&&(time_out<100))  //检测是否发送出去
+ 190   1        {time_out++;DelayUs2x(10);} //未发送出去 进行短暂延时
+ 191   1        TI = 0;           //清除ti标志
+ 192   1      }
+ 193          
+ 194          void uartSendStr(unsigned char *s,unsigned char length)
+ 195          {
+ 196   1        unsigned char NUM;
+ 197   1        NUM=0x00;
+ 198   1        if(Flag)
+ 199   1        {
+ 200   2          if(modeFlag)
+ 201   2            uartSendByte(0x02);//卡片录入模式位
+ 202   2          else
+ 203   2            uartSendByte(0x01);//签退模式位
+ 204   2        }
+ 205   1        else
+ 206   1        {
+ 207   2          if(modeFlag)
+ 208   2            uartSendByte(0x02);//卡片录入模式位
+ 209   2          else
+ 210   2            uartSendByte(0x00);//签到模式位
+ 211   2        }
+ 212   1        while(NUM<length) //发送长度对比
+ 213   1        {
+ 214   2          uartSendByte(*s);  //发送单字节数据
+ 215   2          s++;      //指针++
+ 216   2          NUM++;      //下一个++
+ 217   2        }
+ 218   1      }
+ 219          
+ 220          void UART_SER (void) interrupt 4  //串行中断服务程序
+ 221          {
+ 222   1        if(RI)                        //判断是接收中断产生
+ 223   1        {
+ 224   2          RI=0;                      //标志位清零
+ 225   2        }
+ 226   1        
+ 227   1        if(TI)  //如果是发送标志位，清零
+ 228   1        TI=0;
+ 229   1      } 
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    759    ----
+   CONSTANT SIZE    =     84    ----
+   XDATA SIZE       =     47       7
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      5    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.54   MAIN                                                                  12/10/2021 13:28:42 PAGE 5   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

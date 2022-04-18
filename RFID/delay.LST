@@ -1,0 +1,69 @@
+C51 COMPILER V9.54   DELAY                                                                 12/10/2021 13:28:42 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE DELAY
+OBJECT MODULE PLACED IN delay.OBJ
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE delay.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include "delay.h"
+   2          #include "intrins.h"
+   3          /*------------------------------------------------
+   4           uS延时函数，含有输入参数 unsigned char t，无返回值
+   5           unsigned char 是定义无符号字符变量，其值的范围是
+   6           0~255 这里使用晶振12M，精确延时请使用汇编,大致延时
+   7           长度如下 T=tx2+5 uS 
+   8          ------------------------------------------------*/
+   9          void DelayUs2x(unsigned char t)
+  10          {   
+  11   1       while(--t);
+  12   1      }
+  13          /*------------------------------------------------
+  14           mS延时函数，含有输入参数 unsigned char t，无返回值
+  15           unsigned char 是定义无符号字符变量，其值的范围是
+  16           0~255 这里使用晶振12M，精确延时请使用汇编
+  17          ------------------------------------------------*/
+  18          void DelayMs(unsigned char t)
+  19          {
+  20   1           
+  21   1       while(t--)
+  22   1       {
+  23   2           //大致延时1mS
+  24   2           DelayUs2x(245);
+  25   2         DelayUs2x(245);
+  26   2       }
+  27   1      }
+  28          /*------------------------------------------------
+  29           延时1ms，晶振11.0592MHz
+  30          ------------------------------------------------*/
+  31          void Delay1Ms(unsigned int ms)    //@11.0592MHz
+  32          {
+  33   1        unsigned char i, j;
+  34   1        while(ms--)
+  35   1        {
+  36   2          _nop_();
+  37   2          i = 2;
+  38   2          j = 199;
+  39   2          do
+  40   2          {
+  41   3            while (--j);
+  42   3          } while (--i);
+  43   2        }
+  44   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     46    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.54   DELAY                                                                 12/10/2021 13:28:42 PAGE 2   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

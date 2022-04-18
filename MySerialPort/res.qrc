@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>img/图片2.png</file>
+        <file>img/图片3.png</file>
+        <file>img/triangles-1430105_640.png</file>
+        <file>img/water-drops-6373296_640.jpg</file>
+    </qresource>
+</RCC>

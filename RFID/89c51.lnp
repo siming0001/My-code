@@ -1,0 +1,8 @@
+"STARTUP.obj",
+"delay.obj",
+"main.obj",
+"rc522.obj",
+"1602.obj",
+"beep.obj" 
+TO "89c51" 
+RAMSIZE(256) 

@@ -1,0 +1,57 @@
+C51 COMPILER V9.54   BEEP                                                                  12/10/2021 13:28:42 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE BEEP
+OBJECT MODULE PLACED IN beep.OBJ
+COMPILER INVOKED BY: E:\Keil_v5\C51\BIN\C51.EXE beep.c LARGE OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND TABS(2)
+
+line level    source
+
+   1          #include <REGX52.H>
+   2          #include "delay.h"
+   3          #include "intrins.h"
+   4          #include "beep.h"
+   5          
+   6          sbit Beep=P2^5;
+   7          unsigned int i;
+   8          
+   9          void Beep_Delay500us(void)    //@11.0592MHz
+  10          {
+  11   1        unsigned char i;
+  12   1      
+  13   1        _nop_();
+  14   1        i = 227;
+  15   1        while (--i);
+  16   1      }
+  17          
+  18          void Beep_Time(unsigned int ms) //1000Hz
+  19          {
+  20   1        for(i=0;i<ms*2;i++)
+  21   1        {
+  22   2          Beep=!Beep;
+  23   2          Beep_Delay500us();
+  24   2        }
+  25   1      }
+  26          
+  27          void Beep_Time1(unsigned int ms)  //500Hz
+  28          {
+  29   1        for(i=0;i<ms*2;i++)
+  30   1        {
+  31   2          Beep=!Beep;
+  32   2          Delay1Ms(1);
+  33   2        }
+  34   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    124    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
